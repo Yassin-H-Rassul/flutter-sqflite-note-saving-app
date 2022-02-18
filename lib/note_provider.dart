@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sql_proj/note_model.dart';
+import 'package:sqlbrite/sqlbrite.dart';
 
 class NoteProvider extends ChangeNotifier {
   final String tableNote = 'note';
@@ -8,6 +9,7 @@ class NoteProvider extends ChangeNotifier {
   final String columnNoteContent = 'noteContent';
   final String columnSelectedDate = 'selectedDate';
   Database? db;
+  BriteDatabase? _briteDatabase;
 
   Future open(String path) async {
     print('//////////////////////////inside open method');
@@ -22,6 +24,8 @@ create table $tableNote (
 
       print('>>>>>>>>>>>>>>>>>>>>> table created.');
     });
+
+    _briteDatabase = BriteDatabase(db!);
   }
 
   Future<Note> insert(Note note) async {
@@ -48,6 +52,29 @@ create table $tableNote (
       list.add(note);
     });
     return list;
+  }
+
+  Stream<List<Note>> fetchNotesAsStream() {
+    Stream<List<Note>> streamOfNotes = _briteDatabase!
+        .createQuery(tableNote)
+        .mapToList((row) => Note.fromMap(row));
+
+    return streamOfNotes;
+    // _briteDatabase!.createRawQuery(
+    //     [tableNote], 'SELECT * FROM $tableNote').listen((event) {
+    //   event.call().then((value) {
+    //     // list of map
+    //     listOfNotes = value.map((e) => Note.fromMap(e)).toList();
+    //   });
+    // });
+
+    // List<Note> list = [];
+    // List<Map<String, dynamic>> docs = await db!.rawQuery('SELECT * FROM note');
+    // docs.forEach((element) {
+    //   final Note note = Note.fromMap(element);
+    //   list.add(note);
+    // });
+    // return list;
   }
 
   Future<int> delete(int id) async {

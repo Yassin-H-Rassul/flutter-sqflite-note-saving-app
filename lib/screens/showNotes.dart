@@ -22,29 +22,46 @@ class _ShowNotesState extends State<ShowNotes> {
     return Scaffold(
       appBar: AppBar(),
       body: Container(
-          child: FutureBuilder<List<Note>>(
-        future: Provider.of<NoteProvider>(context, listen: false).fetchNotes(),
+          child: StreamBuilder<List<Note>>(
+        stream: Provider.of<NoteProvider>(context).fetchNotesAsStream(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) {
+          if (snapshot.data == null) {
+            return Center(
+              child: Text('no data added yet.'),
+            );
+          } else if (!snapshot.hasData) {
             return Center(
               child: CircularProgressIndicator(),
             );
           } else if (snapshot.hasError) {
             return Text(snapshot.error.toString());
+          } else {
+            return ListView.separated(
+              itemCount: snapshot.data!.length,
+              separatorBuilder: (context, index) {
+                return Divider();
+              },
+              itemBuilder: (context, index) {
+                return NoteTile(
+                    note: snapshot.data![index],
+                    rebuildHandler: checkForRebuilding);
+              },
+            );
           }
-          return ListView.separated(
-            itemCount: snapshot.data!.length,
-            separatorBuilder: (context, index) {
-              return Divider();
-            },
-            itemBuilder: (context, index) {
-              return NoteTile(
-                  note: snapshot.data![index],
-                  rebuildHandler: checkForRebuilding);
-            },
-          );
         },
-      )),
+      )
+
+          //   FutureBuilder<List<Note>>(
+          // future: Provider.of<NoteProvider>(context, listen: false).fetchNotes(),
+          // builder: (context, snapshot) {
+          //   if (!snapshot.hasData) {
+          //     return Center(
+          //       child: CircularProgressIndicator(),
+          //     );
+          //   } else if (snapshot.hasError) {
+          //     return Text(snapshot.error.toString());
+          //   }
+          ),
     );
   }
 }
